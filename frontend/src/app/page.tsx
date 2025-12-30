@@ -26,7 +26,7 @@ const heroCopy = {
 };
 
 export default function Home() {
-  const [ticker, setTicker] = useState("AAPL");
+  const [ticker, setTicker] = useState("");
   const [range, setRange] = useState<PriceRange>("1M");
   const [priceData, setPriceData] = useState<PricesResponse | null>(null);
   const [newsData, setNewsData] = useState<NewsResponse | null>(null);
@@ -54,6 +54,28 @@ export default function Home() {
           pointRadius: 0,
         },
       ],
+    };
+  }, [priceData]);
+
+  const stats = useMemo(() => {
+    if (!priceData || priceData.points.length === 0) return null;
+    const points = priceData.points;
+    const latest = points[points.length - 1];
+    const previous = points.length > 1 ? points[points.length - 2] : null;
+    const change = previous ? latest.close - previous.close : null;
+    const changePct = previous ? (change / previous.close) * 100 : null;
+    let rangeHigh = points[0].high;
+    let rangeLow = points[0].low;
+    for (const point of points) {
+      rangeHigh = Math.max(rangeHigh, point.high);
+      rangeLow = Math.min(rangeLow, point.low);
+    }
+    return {
+      latestClose: latest.close,
+      change,
+      changePct,
+      rangeHigh,
+      rangeLow,
     };
   }, [priceData]);
 
@@ -102,7 +124,7 @@ export default function Home() {
     <div className="app">
       <header className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">Stock Market Visualizer</p>
+          <p className="eyebrow">MarketLens</p>
           <h1>{heroCopy.headline}</h1>
           <p className="subhead">{heroCopy.subhead}</p>
         </div>
@@ -112,7 +134,7 @@ export default function Home() {
             <input
               value={ticker}
               onChange={(event) => setTicker(event.target.value.toUpperCase())}
-              placeholder="AAPL"
+              placeholder="e.g., AAPL"
             />
           </label>
           <div className="range-group">
@@ -149,7 +171,7 @@ export default function Home() {
           <div className="card-header">
             <div>
               <p className="label">Price trend</p>
-              <h2>{priceData ? `${priceData.ticker} - ${priceData.range}` : "Waiting for data"}</h2>
+              {priceData ? <h2>{`${priceData.ticker} - ${priceData.range}`}</h2> : null}
             </div>
             <span className="pill">Daily close</span>
           </div>
@@ -168,16 +190,66 @@ export default function Home() {
                 }}
               />
             ) : (
-              <div className="empty">Submit a ticker to see the chart.</div>
+              <div className="empty chart-skeleton" aria-hidden="true">
+                <div className="skeleton-line long" />
+                <div className="skeleton-line medium" />
+                <div className="skeleton-line short" />
+                <div className="skeleton-area" />
+              </div>
             )}
           </div>
+          {stats ? (
+            <div className="stats-strip">
+              <div className="stat">
+                <p className="stat-label">Last close</p>
+                <p className="stat-value">${stats.latestClose.toFixed(2)}</p>
+              </div>
+              <div className="stat">
+                <p className="stat-label">Day change</p>
+                <p
+                  className={`stat-value ${
+                    stats.change !== null && stats.change >= 0
+                      ? "positive"
+                      : stats.change !== null
+                      ? "negative"
+                      : ""
+                  }`}
+                >
+                  {stats.change !== null
+                    ? `${stats.change >= 0 ? "+" : ""}${stats.change.toFixed(2)}`
+                    : "—"}
+                </p>
+                <p
+                  className={`stat-subtle ${
+                    stats.changePct !== null && stats.changePct >= 0
+                      ? "positive"
+                      : stats.changePct !== null
+                      ? "negative"
+                      : ""
+                  }`}
+                >
+                  {stats.changePct !== null
+                    ? `${stats.changePct >= 0 ? "+" : ""}${stats.changePct.toFixed(2)}%`
+                    : "—"}
+                </p>
+              </div>
+              <div className="stat">
+                <p className="stat-label">Range high</p>
+                <p className="stat-value">${stats.rangeHigh.toFixed(2)}</p>
+              </div>
+              <div className="stat">
+                <p className="stat-label">Range low</p>
+                <p className="stat-value">${stats.rangeLow.toFixed(2)}</p>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="card news-card">
           <div className="card-header">
             <div>
               <p className="label">Curated news</p>
-              <h2>{newsData ? "Top headlines" : "Awaiting selection"}</h2>
+              {newsData ? <h2>Top headlines</h2> : null}
             </div>
             <span className="pill">LLM ranked</span>
           </div>
@@ -189,7 +261,13 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="empty">News will appear after you analyze a ticker.</div>
+            <div className="empty news-skeleton" aria-hidden="true">
+              <div className="skeleton-line long" />
+              <div className="skeleton-line medium" />
+              <div className="skeleton-line short" />
+              <div className="skeleton-line long" />
+              <div className="skeleton-line medium" />
+            </div>
           )}
         </div>
       </section>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Stock Market Visualizer",
+  title: "MarketLens",
   description: "Markets, without the noise.",
 };
 
