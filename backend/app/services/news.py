@@ -13,8 +13,14 @@ async def curate_news(
     return ranked
 
 async def summarize_news(ticker: str, articles: List[NewsArticle]) -> str:
-    llm = LlmClient()
-    return await llm.summarize(ticker, articles)
+    try:
+        llm = LlmClient()
+        return await llm.summarize(ticker, articles)
+    except Exception:
+        # Fall back when the LLM is unavailable or misconfigured.
+        if not articles:
+            return f"No high-confidence news found for {ticker.upper()}."
+        return f"Top {ticker.upper()} headlines summarized."
 
 
 def score_article_match(ticker: str, title: str, summary: str) -> float:

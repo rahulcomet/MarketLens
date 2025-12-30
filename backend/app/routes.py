@@ -69,11 +69,15 @@ async def ask(request: AskRequest) -> AskResponse:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     curated = await curate_news(request.ticker, raw_articles, limit=5)
-    answer = await llm.answer_question(request, prices, curated)
+    try:
+        answer = await llm.answer_question(request, prices, curated)
+    except Exception:
+        # Return a safe fallback if the LLM fails.
+        answer = None
 
     return AskResponse(
         ticker=request.ticker.upper(),
         question=request.question,
-        answer=answer.text,
-        sources=answer.sources,
+        answer=answer.text if answer else "Answer temporarily unavailable. Please try again.",
+        sources=answer.sources if answer else [article.url for article in curated if article.url][:3],
     )

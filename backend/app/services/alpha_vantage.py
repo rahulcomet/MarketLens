@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import os
+import re
 from datetime import datetime, timedelta
 from typing import List
 
@@ -53,9 +54,10 @@ class AlphaVantageClient:
         return points
 
     async def fetch_news(self, ticker: str) -> List[NewsArticle]:
+        sanitized_ticker = _sanitize_news_ticker(ticker)
         params = {
             "function": "NEWS_SENTIMENT",
-            "tickers": ticker.upper(),
+            "tickers": sanitized_ticker,
             "limit": "50",
             "apikey": self.api_key,
         }
@@ -64,7 +66,7 @@ class AlphaVantageClient:
         data = _parse_alpha_response(response)
         feed = data.get("feed")
         if not feed:
-            raise ValueError("Alpha Vantage returned no news data")
+            return []
 
         articles: List[NewsArticle] = []
         for item in feed:
@@ -115,3 +117,11 @@ def _parse_alpha_response(response: httpx.Response) -> dict:
             raise ValueError(f"Alpha Vantage error: {message}")
 
     return data
+
+
+def _sanitize_news_ticker(ticker: str) -> str:
+    # Alpha Vantage news endpoint rejects tickers with non-alphanumeric chars (e.g., BRK.B).
+    cleaned = re.sub(r"[^A-Za-z0-9:_]", "", ticker.upper())
+    if not cleaned:
+        raise ValueError(f"Invalid ticker format: {ticker}")
+    return cleaned
