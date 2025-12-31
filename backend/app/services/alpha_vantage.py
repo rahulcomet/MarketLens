@@ -1,5 +1,7 @@
 ﻿from __future__ import annotations
 
+"""Alpha Vantage API client and response parsing."""
+
 import os
 import re
 from datetime import datetime, timedelta
@@ -12,6 +14,7 @@ from app.services.env_utils import read_env_key
 from app.services.news import score_article_match
 
 class AlphaVantageClient:
+    """Thin async client for Alpha Vantage market data."""
     def __init__(self) -> None:
         self.api_key = os.getenv("ALPHAVANTAGE_API_KEY", "").strip()
         if not self.api_key:
@@ -20,6 +23,7 @@ class AlphaVantageClient:
             raise ValueError("Missing ALPHAVANTAGE_API_KEY")
 
     async def fetch_prices(self, ticker: str, range: PriceRange) -> List[PricePoint]:
+        """Fetch daily price points for a ticker within a range."""
         params = {
             "function": "TIME_SERIES_DAILY",
             "symbol": ticker.upper(),
@@ -54,6 +58,7 @@ class AlphaVantageClient:
         return points
 
     async def fetch_news(self, ticker: str) -> List[NewsArticle]:
+        """Fetch recent news articles for a ticker."""
         sanitized_ticker = _sanitize_news_ticker(ticker)
         params = {
             "function": "NEWS_SENTIMENT",
@@ -90,6 +95,7 @@ class AlphaVantageClient:
 
 
 def _range_cutoff(range: PriceRange) -> datetime.date:
+    """Translate a PriceRange into a cutoff date."""
     today = datetime.utcnow().date()
     if range == PriceRange.ONE_WEEK:
         return today - timedelta(days=7)
@@ -101,6 +107,7 @@ def _range_cutoff(range: PriceRange) -> datetime.date:
 
 
 def _parse_alpha_response(response: httpx.Response) -> dict:
+    """Validate and decode Alpha Vantage responses."""
     try:
         response.raise_for_status()
     except httpx.HTTPError as exc:

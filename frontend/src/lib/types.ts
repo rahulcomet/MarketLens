@@ -31,15 +31,3 @@ export interface NewsResponse {
   articles: NewsArticle[];
 }
 
-export interface AskRequest {
-  ticker: string;
-  range: PriceRange;
-  question: string;
-}
-
-export interface AskResponse {
-  ticker: string;
-  question: string;
-  answer: string;
-  sources: string[];
-}

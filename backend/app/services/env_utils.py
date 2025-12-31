@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+"""Helpers for reading local .env files without external dependencies."""
+
 from pathlib import Path
 from typing import Optional
 
 
 def read_env_key(name: str) -> Optional[str]:
+    """Return a value from backend/.env if present."""
     env_path = Path(__file__).resolve().parents[2] / ".env"
     if not env_path.exists():
         return None

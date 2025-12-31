@@ -18,6 +18,7 @@ import type { NewsArticle, NewsResponse, PriceRange, PricesResponse } from "../l
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 const ranges: PriceRange[] = ["1W", "1M", "100D"];
+// Throttle requests to avoid tripping API rate limits.
 const requestCooldownMs = 1000;
 
 const heroCopy = {
@@ -63,7 +64,7 @@ export default function Home() {
     const latest = points[points.length - 1];
     const previous = points.length > 1 ? points[points.length - 2] : null;
     const change = previous ? latest.close - previous.close : null;
-    const changePct = previous ? (change / previous.close) * 100 : null;
+    const changePct = previous ? ((latest.close - previous.close) / previous.close) * 100 : null;
     let rangeHigh = points[0].high;
     let rangeLow = points[0].low;
     for (const point of points) {
@@ -185,7 +186,11 @@ export default function Home() {
                   plugins: { legend: { display: false } },
                   scales: {
                     x: { ticks: { maxTicksLimit: 6 } },
-                    y: { ticks: { callback: (value) => `$${value}` } },
+                    y: {
+                      ticks: {
+                        callback: (value) => (value == null ? "" : `$${value}`),
+                      },
+                    },
                   },
                 }}
               />

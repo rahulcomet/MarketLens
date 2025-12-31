@@ -1,15 +1,18 @@
 ﻿from __future__ import annotations
 
+"""LLM client wrapper for summarization."""
+
 import asyncio
 import os
 from typing import List
 
 import google.generativeai as genai
 
-from app.models import AskAnswer, AskRequest, NewsArticle, PricePoint
+from app.models import NewsArticle
 from app.services.env_utils import read_env_key
 
 class LlmClient:
+    """Wraps Gemini API calls and prompt composition."""
     def __init__(self) -> None:
         self.api_key = os.getenv("GEMINI_API_KEY", "").strip()
         if not self.api_key:
@@ -21,8 +24,12 @@ class LlmClient:
         self.model = genai.GenerativeModel(self.model_name)
 
     async def _generate(self, prompt: str) -> str:
+        """Run a prompt against the model in a thread."""
         def _call() -> str:
-            response = self.model.generate_content(prompt)
+            try:
+                response = self.model.generate_content(prompt)
+            except Exception as exc:
+                raise ValueError(f"Gemini request failed: {exc}") from exc
             return response.text or ""
 
         return await asyncio.to_thread(_call)
@@ -30,11 +37,13 @@ class LlmClient:
     async def rerank_and_filter(
         self, ticker: str, articles: List[NewsArticle], limit: int
     ) -> List[NewsArticle]:
+        """Order articles by heuristic relevance and trim."""
         # Keep the heuristic ranking for now to avoid extra latency/cost.
         ranked = sorted(articles, key=lambda item: item.relevance_score, reverse=True)
         return ranked[:limit]
 
     async def summarize(self, ticker: str, articles: List[NewsArticle]) -> str:
+        """Summarize curated headlines for a ticker."""
         if not articles:
             return f"No high-confidence news found for {ticker.upper()}."
         items = "\n".join(
@@ -48,31 +57,3 @@ class LlmClient:
         text = await self._generate(prompt)
         return text.strip() or f"Top {ticker.upper()} headlines summarized."
 
-    async def answer_question(
-        self, request: AskRequest, prices: List[PricePoint], articles: List[NewsArticle]
-    ) -> AskAnswer:
-        sources = [article.url for article in articles if article.url][:3]
-        if not prices:
-            return AskAnswer(
-                text="I couldn't retrieve recent price data. Please try again later.",
-                sources=sources,
-            )
-        latest = prices[-1]
-        headlines = "\n".join(
-            f"- {article.title} ({article.url})" for article in articles[:5]
-        )
-        prompt = (
-            "You are a helpful market assistant. Answer the user's question briefly "
-            "using the latest price and the headlines provided. If data is missing, "
-            "say so. Provide a concise answer in 2-4 sentences.\n\n"
-            f"Question: {request.question}\n"
-            f"Latest close: {latest.close:.2f} on {latest.date}\n"
-            f"Headlines:\n{headlines}"
-        )
-        text = await self._generate(prompt)
-        cleaned = text.strip()
-        text = cleaned or (
-            f"Latest close is {latest.close:.2f} on {latest.date}. "
-            "No additional context available."
-        )
-        return AskAnswer(text=text, sources=sources)

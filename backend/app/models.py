@@ -1,5 +1,7 @@
 ﻿from __future__ import annotations
 
+"""Pydantic models and enums for API requests/responses."""
+
 from datetime import date
 from enum import Enum
 from typing import List, Optional
@@ -10,6 +12,7 @@ class HealthResponse(BaseModel):
     status: str
 
 class PriceRange(str, Enum):
+    """Supported ranges for price queries."""
     ONE_WEEK = "1W"
     ONE_MONTH = "1M"
     ONE_HUNDRED_DAYS = "100D"
@@ -28,6 +31,7 @@ class PricesResponse(BaseModel):
     points: List[PricePoint]
 
 class NewsArticle(BaseModel):
+    """Normalized news article with relevance metadata."""
     title: str
     url: str
     source: Optional[str] = None
@@ -41,17 +45,3 @@ class NewsResponse(BaseModel):
     summary: str
     articles: List[NewsArticle]
 
-class AskRequest(BaseModel):
-    ticker: str = Field(min_length=1, max_length=10)
-    range: PriceRange = PriceRange.ONE_MONTH
-    question: str = Field(min_length=5, max_length=500)
-
-class AskAnswer(BaseModel):
-    text: str
-    sources: List[str]
-
-class AskResponse(BaseModel):
-    ticker: str
-    question: str
-    answer: str
-    sources: List[str]
