@@ -1,7 +1,7 @@
 import type { NewsResponse, PriceRange, PricesResponse } from "./types";
 
 // Relative base for the backend API.
-const API_BASE = "/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api/v1";
 
 function normalizeAlphaVantageError(message: string): string {
   if (message.includes("Alpha Vantage error:")) {
