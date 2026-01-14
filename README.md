@@ -1,11 +1,15 @@
 # MarketLens
 
-
 Lightweight stock market dashboard with a FastAPI backend and a Next.js frontend.
 
 ## Dashboard Preview
 
 ![MarketLens dashboard](docs/dashboard.png)
+
+## Live Demo
+
+- https://market-lens-pi.vercel.app
+- Note: The backend is on Render's free tier and will sleep after 15 minutes of inactivity. First request can take ~1 minute to wake up.
 
 ## Architecture
 
@@ -37,6 +41,14 @@ The frontend expects the API at `http://localhost:8000/api/v1`.
 - `ALPHAVANTAGE_API_KEY`: Alpha Vantage market data.
 - `GEMINI_API_KEY`: Gemini API access for summaries.
 - `GEMINI_MODEL`: Optional model override (default in code).
+- `NEXT_PUBLIC_API_BASE`: Frontend API base URL (e.g., `https://<render-url>/api/v1`).
+
+## Deployment
+
+- Backend (Render): deploy `backend/` with `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+- Frontend (Vercel): deploy `frontend/` as a Next.js app.
+- Set `NEXT_PUBLIC_API_BASE` in Vercel to your Render URL + `/api/v1`.
+- Verify backend health at `https://<render-url>/api/v1/health`.
 
 ## API Endpoints
 
