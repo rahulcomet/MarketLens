@@ -38,6 +38,8 @@ export default function Home() {
   const [lastPriceRequest, setLastPriceRequest] = useState(0);
   const [lastNewsRequest, setLastNewsRequest] = useState(0);
 
+  const isTickerValid = ticker.trim().length > 0;
+
   const chartData = useMemo(() => {
     if (!priceData) return null;
     const labels = priceData.points.map((point) => point.date);
@@ -82,6 +84,11 @@ export default function Home() {
 
   async function handlePrices(event: React.FormEvent) {
     event.preventDefault();
+    const trimmed = ticker.trim();
+    if (!trimmed) {
+      setPriceError("Enter a ticker symbol first.");
+      return;
+    }
     const now = Date.now();
     if (now - lastPriceRequest < requestCooldownMs) {
       setPriceError("Please wait 1s before requesting prices again.");
@@ -91,7 +98,7 @@ export default function Home() {
     setPriceLoading(true);
     setPriceError(null);
     try {
-      const prices = await fetchPrices(ticker.trim(), range);
+      const prices = await fetchPrices(trimmed, range);
       setPriceData(prices);
     } catch (err) {
       // Avoid Promise.all here: parallel price/news calls can trigger API failures.
@@ -102,6 +109,11 @@ export default function Home() {
   }
 
   async function handleNews() {
+    const trimmed = ticker.trim();
+    if (!trimmed) {
+      setNewsError("Enter a ticker symbol first.");
+      return;
+    }
     const now = Date.now();
     if (now - lastNewsRequest < requestCooldownMs) {
       setNewsError("Please wait 1s before requesting news again.");
@@ -111,7 +123,7 @@ export default function Home() {
     setNewsLoading(true);
     setNewsError(null);
     try {
-      const news = await fetchNews(ticker.trim());
+      const news = await fetchNews(trimmed);
       setNewsData(news);
     } catch (err) {
       // Avoid Promise.all here: parallel price/news calls can trigger API failures.
@@ -150,14 +162,14 @@ export default function Home() {
               </button>
             ))}
           </div>
-          <button type="submit" className="primary" disabled={priceLoading}>
+          <button type="submit" className="primary" disabled={priceLoading || !isTickerValid}>
             {priceLoading ? "Loading prices." : "Analyze prices"}
           </button>
           <button
             type="button"
             className="primary"
             onClick={handleNews}
-            disabled={newsLoading}
+            disabled={newsLoading || !isTickerValid}
           >
             {newsLoading ? "Loading news." : "Fetch news"}
           </button>
@@ -222,7 +234,7 @@ export default function Home() {
                 >
                   {stats.change !== null
                     ? `${stats.change >= 0 ? "+" : ""}${stats.change.toFixed(2)}`
-                    : "—"}
+                    : "--"}
                 </p>
                 <p
                   className={`stat-subtle ${
@@ -235,7 +247,7 @@ export default function Home() {
                 >
                   {stats.changePct !== null
                     ? `${stats.changePct >= 0 ? "+" : ""}${stats.changePct.toFixed(2)}%`
-                    : "—"}
+                    : "--"}
                 </p>
               </div>
               <div className="stat">
