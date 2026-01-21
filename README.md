@@ -8,7 +8,7 @@ Lightweight stock market dashboard with a FastAPI backend and a Next.js frontend
 
 ## Live Demo
 
-- [Live Demo](https://market-lens-pi.vercel.app)
+- [Live Demo](https://mlens.vercel.app)
 - Note: The backend is on Render's free tier and will sleep after 15 minutes of inactivity. First request can take ~1 minute to wake up.
 
 ## Architecture
